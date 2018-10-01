@@ -32,7 +32,7 @@ void loop() {
             for(int i=5; i>=0; i--){                  //---------- M E S S A G E - L E N G T H ----------
                 if(bitRead(input.length(), i) == 1){  //convert message length to binary (6 bit) 
                     message[pos] = 255;               //and store it to the next 6 cells of table "message[]"
-                }else                                 //starting from the most significant bit(MSB orleft-most)
+                }else{                                //starting from the most significant bit(MSB orleft-most)
                     message[pos] = 0;                 //ex: if message length = 3 (characters)                
                 }                                     //it will be converted to: 000011              
                 pos++;                                //
