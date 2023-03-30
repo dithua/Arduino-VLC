@@ -21,60 +21,65 @@ void setup()
 
 void loop()
 {
-    if (Serial.available() > 0)
-    {                                // check if there are any data to send and if so,
-        input = Serial.readString(); // read the incoming String
-        newSize = input.length();    // store message length
-        if (newSize > 62)
-        {                                                                        // if message is too long
-            Serial.println("I received: " + input);                              // inform user
-            Serial.print(newSize);                                               //
-            Serial.println(" characters, message too big (max: 31 characters)"); //
-        }
-        else if ((newSize <= 62))
-        {                                           // else
-            Serial.println("sending...");           // informe user that transmission has started
-            Serial.println("I received: " + input); // print the received input
-
-            for (int i = 5; i >= 0; i--)
-            { //---------- M E S S A G E - L E N G T H ----------
-                if (bitRead(input.length(), i) == 1)
-                {                       // convert message length to binary (6 bit)
-                    message[pos] = 255; // and store it to the next 6 cells of table "message[]"
-                }
-                else
-                {                     // starting from the most significant bit(MSB orleft-most)
-                    message[pos] = 0; // ex: if message length = 3 (characters)
-                }                     // it will be converted to: 000011
-                pos++;                //
-            }                         //---------- M E S S A G E - L E N G T H ----------
-
-            for (int i = 0; i < input.length(); i++)
-            { //---------- M E S S A G E ----------
-                for (int j = 7; j >= 0; j--)
-                {                                        // for every character
-                    bytes = bitRead(input.charAt(i), j); // for every bit of
-                    if (bytes == 1)
-                    {                       // the current character
-                        message[pos] = 255; // starting from the MSB
-                    }
-                    else if (bytes == 0)
-                    {                     // store the bit to the next cell
-                        message[pos] = 0; // of table "message[]"
-                    }                     // the characters are
-                    pos++;                // stored with ASCII encoding
-                }                         //
-            }                             //---------- M E S S A G E ----------
-
-            for (int k = 0; k < pos; k++)
-            {                                 //---------- T R A N S M I T - M E S S A G E ----------
-                analogWrite(led, message[k]); // turn on or off the LED according to the current bit
-                delay(dl);                    // wait for "dl" msec
-            }                                 //---------- T R A N S M I T - M E S S A G E ----------
-
-            pos = 5;                        // reset position to 5 (the first 5{0,1,2,3,4} cells of the table are preset with the header)
-            Serial.println("message sent"); // inform user that message has been sent
-        }
+    if (Serial.available() == 0)
+    {
+        return;
     }
+
+    // check if there are any data to send and if so,
+    input = Serial.readString(); // read the incoming String
+    newSize = input.length();    // store message length
+    if (newSize > 62)
+    {                                                                        // if message is too long
+        Serial.println("I received: " + input);                              // inform user
+        Serial.print(newSize);                                               //
+        Serial.println(" characters, message too big (max: 31 characters)"); //
+    }
+    else
+    {                                           // else
+        Serial.println("sending...");           // informe user that transmission has started
+        Serial.println("I received: " + input); // print the received input
+
+        for (int i = 5; i >= 0; i--)
+        { //---------- M E S S A G E - L E N G T H ----------
+
+            int inputBit = bitRead(input.length(), i);
+            message[pos] = inputBit == 1 ? 255 : 0;
+            // convert message length to binary (6 bit)
+            // and store it to the next 6 cells of table "message[]"
+
+            // starting from the most significant bit(MSB orleft-most)
+            // ex: if message length = 3 (characters)
+            // it will be converted to: 000011
+            pos++; //
+        }          //---------- M E S S A G E - L E N G T H ----------
+
+        for (int i = 0; i < input.length(); i++)
+        { //---------- M E S S A G E ----------
+            for (int j = 7; j >= 0; j--)
+            {                                        // for every character
+                bytes = bitRead(input.charAt(i), j); // for every bit of
+
+                message[pos] = bytes == 1 ? 255 : 0;
+                // the current character
+                // starting from the MSB
+
+                // store the bit to the next cell
+                // of table "message[]"
+                // the characters are
+                pos++; // stored with ASCII encoding
+            }          //
+        }              //---------- M E S S A G E ----------
+
+        for (int k = 0; k < pos; k++)
+        {                                 //---------- T R A N S M I T - M E S S A G E ----------
+            analogWrite(led, message[k]); // turn on or off the LED according to the current bit
+            delay(dl);                    // wait for "dl" msec
+        }                                 //---------- T R A N S M I T - M E S S A G E ----------
+
+        pos = 5;                        // reset position to 5 (the first 5{0,1,2,3,4} cells of the table are preset with the header)
+        Serial.println("message sent"); // inform user that message has been sent
+    }
+
     analogWrite(led, 0); // reset LED
 }
