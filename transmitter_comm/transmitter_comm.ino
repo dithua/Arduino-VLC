@@ -45,29 +45,29 @@ void loop()
 
             int inputBit = bitRead(input.length(), i);
             message[pos] = inputBit == 1 ? 255 : 0;
+            pos++; 
             // convert message length to binary (6 bit)
             // and store it to the next 6 cells of table "message[]"
-
             // starting from the most significant bit(MSB orleft-most)
             // ex: if message length = 3 (characters)
             // it will be converted to: 000011
-            pos++; //
         }          //---------- M E S S A G E - L E N G T H ----------
 
         for (int i = 0; i < input.length(); i++)
         { //---------- M E S S A G E ----------
             for (int j = 7; j >= 0; j--)
-            {                                        // for every character
-                bytes = bitRead(input.charAt(i), j); // for every bit of
-
+            {                                        
+                bytes = bitRead(input.charAt(i), j); 
                 message[pos] = bytes == 1 ? 255 : 0;
+                pos++;
+                // for every bit of
+                // for every character
                 // the current character
                 // starting from the MSB
-
                 // store the bit to the next cell
                 // of table "message[]"
                 // the characters are
-                pos++; // stored with ASCII encoding
+                // stored with ASCII encoding
             }          //
         }              //---------- M E S S A G E ----------
 
