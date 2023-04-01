@@ -8,6 +8,7 @@ const int dl = 3;  // reception delay per bit
 const int lightPin = A0; // define reception LED pin
 int ambient = 0;   // ambient input/noise level
 int reading;       // input reading
+bool isOne;
 
 enum state
 {
@@ -30,7 +31,7 @@ syncState currentSyncState; // indicator for 3 states{0: transmitter and receive
 int countZero = 0; // number of "0"s
 int countOne = 0;  // number of "1"s
 
-bool firstReadingZero; // indicates if that at the first reading(of the 3)the input value was0
+bool firstReadingOne; // indicates if that at the first reading(of the 3)the input value was 1
 
 String decodedBit; // decoded bit as string ex: "1" (max of n0, n1)
 
@@ -48,7 +49,7 @@ void setup()
     Serial.begin(9600);                   // set baud rate to 9600
     lengthBitPosition = 5;                //
     charBitPosition = 7;                  //
-    firstReadingZero = false;             //
+    firstReadingOne = false;             //
     currentSyncState = syncState::InSync; //
     for (int i = 0; i < 5; i++)
     {                                          //
@@ -86,22 +87,21 @@ void handleInput(int position)
 {
 
     reading = analogRead(lightPin); // read input
-    if (reading > ambient)
-    {                  // if input value is greater than ambient by a 100
-        countOne += 1; // a "1" was found so increase n1 by 1
-        if (position == 0)
-        {                             // if the first reading
-            firstReadingZero = false; // is 1 then f1 = 1
-        }                             //
+    isOne = reading > ambient;
+
+    if (position == 0) {
+        firstReadingOne = isOne;
     }
-    else
-    {                   // else
-        countZero += 1; // a "0" was found so increase n0 by 1
-        if (position == 0)
-        {                            // if the first reading
-            firstReadingZero = true; // is 0 then f0 = 1
-        }                            //
+
+    if (isOne) 
+    {
+        countOne++;
+    } 
+    else 
+    {
+        countZero++;
     }
+
     delay(dl);
 }
 
@@ -146,8 +146,7 @@ void decodeBit()
         decodedBit = "1"; //
         if (countZero == 1)
         { // if a 0 was found once
-            currentSyncState = !firstReadingZero ? syncState::TransmitterFirst : syncState::ResceiverFirst;
-            firstReadingZero = false;
+            currentSyncState = firstReadingOne ? syncState::TransmitterFirst : syncState::ResceiverFirst;
         }
     }
     else
@@ -156,12 +155,12 @@ void decodeBit()
 
         if (countOne == 1)
         { // if a 1 was found once
-            currentSyncState = firstReadingZero ? syncState::TransmitterFirst : syncState::ResceiverFirst;
-            firstReadingZero = false;
+            currentSyncState = !firstReadingOne ? syncState::TransmitterFirst : syncState::ResceiverFirst;
         }
     }
 
     // reset counters
+    firstReadingOne = false;
     countOne = 0;
     countZero = 0;
 }
