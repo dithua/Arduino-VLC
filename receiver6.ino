@@ -31,23 +31,22 @@ int countOne = 0;  // number of "1"s
 
 bool firstReadingZero; // indicates if that at the first reading(of the 3)the input value was0
 
-int decodedBitInt;       // decoded bit as integer ex: 1  (max of n0, n1)
-String decodedBitString; // decoded bit as string ex: "1" (max of n0, n1)
+String decodedBit; // decoded bit as string ex: "1" (max of n0, n1)
 
 String temp_string; // current queue elements in one string
 int msgLength = 0;  // message length
 
-int currentCharAsInt;   // current 8 bits of message to integer
-char currentChar; // character produced by integer x
+int currentCharAsInt; // current 8 bits of message to integer
+char currentChar;     // character produced by integer x
 
-int lengthBitPosition, charBitPosition;            // counters
-String finalMessage; // message
+int lengthBitPosition, charBitPosition; // counters
+String finalMessage;                    // message
 
 void setup()
 {
     Serial.begin(9600);                   // set baud rate to 9600
-    lengthBitPosition = 5;                                //
-    charBitPosition = 7;                                //
+    lengthBitPosition = 5;                //
+    charBitPosition = 7;                  //
     firstReadingZero = false;             //
     currentSyncState = syncState::InSync; //
     for (int i = 0; i < 5; i++)
@@ -142,9 +141,8 @@ void decodeBit()
 {
 
     if (countOne >= countZero)
-    {                           // if more "1"s were found
-        decodedBitInt = 1;      // then bit value is 1
-        decodedBitString = "1"; //
+    {                     // if more "1"s were found
+        decodedBit = "1"; //
         if (countZero == 1)
         { // if a 0 was found once
             currentSyncState = !firstReadingZero ? syncState::TransmitterFirst : syncState::ResceiverFirst;
@@ -152,9 +150,8 @@ void decodeBit()
         }
     }
     else
-    {                      // else(more "0"s were found)
-        decodedBitInt = 0; // then bit value is 0
-        decodedBitString = "0";
+    { // else(more "0"s were found)
+        decodedBit = "0";
 
         if (countOne == 1)
         { // if a 1 was found once
@@ -170,7 +167,7 @@ void decodeBit()
 
 void detectMsgStart()
 {                                                                                                                                                                                            // if message has not been detected (state: 0)
-    enqueue(decodedBitString);                                                                                                                                                               // add the decoded bit to the queue
+    enqueue(decodedBit);                                                                                                                                                                     // add the decoded bit to the queue
     temp_string = String(queue_start[qFront % MAX] + queue_start[(qFront + 1) % MAX] + queue_start[(qFront + 2) % MAX] + queue_start[(qFront + 3) % MAX] + queue_start[(qFront + 4) % MAX]); // turn queue into string
     if (temp_string.compareTo("10101") == 0)
     {                                     // if the string is the header
@@ -181,12 +178,12 @@ void detectMsgStart()
 void decodeMsgLength()
 {
     // for every bit of the 6 starting from the left-most(MSB: most significant bit)
-    if (decodedBitInt == 1)
-    {                         // if decoded bit has a value of "1"
+    if (decodedBit == "1")
+    {                                         // if decoded bit has a value of "1"
         bitSet(msgLength, lengthBitPosition); // set the "j"bit (of msg_length
-    }                         // variable) value as "1"
+    }                                         // variable) value as "1"
     if (lengthBitPosition > 0)
-    {        // ex: j=4 (msg_length is initialized as 0 )
+    {                        // ex: j=4 (msg_length is initialized as 0 )
         lengthBitPosition--; // 000000 --> 001000 binary or 16 decimal(msg_length is integer so it is auto-converted)
     }
     else
@@ -199,31 +196,31 @@ void decodeMsg()
 {
     // for every bit of the current character starting from the MSB
 
-    if (decodedBitInt == 1)
-    {                             // if decoded bit has a value of "1"
+    if (decodedBit == "1")
+    {                                              // if decoded bit has a value of "1"
         bitSet(currentCharAsInt, charBitPosition); // set the "j"bit (of x variable)value as "1"
-    }                             //
+    }
 
     if (charBitPosition > 0)
-    {        //
-        charBitPosition--; //
+    {
+        charBitPosition--;
     }
     else
-    {                                                 // when the 8th bit is decoded before moving on with the next bit
-        currentChar = currentCharAsInt;               // convert integer "x" to character "temp_char" according to ASCII ex:x = 97-->temp_char= a
+    {                                              // when the 8th bit is decoded before moving on with the next bit
+        currentChar = currentCharAsInt;            // convert integer "x" to character "temp_char" according to ASCII ex:x = 97-->temp_char= a
         finalMessage = finalMessage + currentChar; // add character "temp_char" at the end of the string "final_message"ex: final_messag =kj, temp_char = a-->final_message=kja
-        charBitPosition = 7;                                        // reset counter k
-        currentCharAsInt = 0;                            // reset x
+        charBitPosition = 7;                       // reset counter k
+        currentCharAsInt = 0;                      // reset x
 
         if (msgLength > 1)
-        {                //
-            msgLength--; //
+        {
+            msgLength--;
         }
         else
         {                                 // when the last character is added to the string "final_message"
             Serial.println(finalMessage); // print message
             currentState = state::Detect; // reset state to 0
-            lengthBitPosition = 5;                        // reset counter j
+            lengthBitPosition = 5;        // reset counter j
             msgLength = 0;                // reset message length(msg_length)to 0
             finalMessage = String('\0');  // reset string
             resetQ();                     //"final_message" to null and reset queue
