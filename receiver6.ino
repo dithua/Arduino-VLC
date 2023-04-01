@@ -3,6 +3,7 @@ String queue_start[MAX] = {"3", "3", "3", "3", "3"}; // initialize queue so it i
 int qFront = 0;                                      // poin front to the beginning of the queue
 int qRear = 4;                                       // poin rear to the end of the queue
 
+const String msgPrefix = "10101";
 const int dl = 3;  // reception delay per bit
 int lightPin = A0; // define reception LED pin
 int ambient = 0;   // ambient input/noise level
@@ -169,10 +170,7 @@ void detectMsgStart()
 {                                                                                                                                                                                            // if message has not been detected (state: 0)
     enqueue(decodedBit);                                                                                                                                                                     // add the decoded bit to the queue
     temp_string = String(queue_start[qFront % MAX] + queue_start[(qFront + 1) % MAX] + queue_start[(qFront + 2) % MAX] + queue_start[(qFront + 3) % MAX] + queue_start[(qFront + 4) % MAX]); // turn queue into string
-    if (temp_string.compareTo("10101") == 0)
-    {                                     // if the string is the header
-        currentState = state::ReadLength; // message has been detected so set state to 1(state: read message length)
-    }
+    currentState = temp_string.compareTo(msgPrefix) == 0 ? state::ReadLength : currentState;
 }
 
 void decodeMsgLength()
