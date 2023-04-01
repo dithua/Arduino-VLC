@@ -82,13 +82,14 @@ void resetQ()
 
 //========== Q U E U E - F U N C T I O N S ==========
 
-void handleInput(int firstReading)
+void handleInput(int position)
 {
+
     reading = analogRead(lightPin); // read input
     if (reading > ambient)
     {                  // if input value is greater than ambient by a 100
         countOne += 1; // a "1" was found so increase n1 by 1
-        if (firstReading == 0)
+        if (position == 0) 
         {                            // if the first reading
             firstReadingZero = false; // is 1 then f1 = 1
         }                            //
@@ -96,7 +97,7 @@ void handleInput(int firstReading)
     else
     {                   // else
         countZero += 1; // a "0" was found so increase n0 by 1
-        if (firstReading == 0)
+        if (position == 0) 
         {                            // if the first reading
             firstReadingZero = true; // is 0 then f0 = 1
         }                            //
