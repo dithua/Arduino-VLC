@@ -5,7 +5,7 @@ int qRear = 4;                                       // poin rear to the end of 
 
 const String msgPrefix = "10101";
 const int dl = 3;  // reception delay per bit
-int lightPin = A0; // define reception LED pin
+const int lightPin = A0; // define reception LED pin
 int ambient = 0;   // ambient input/noise level
 int reading;       // input reading
 
