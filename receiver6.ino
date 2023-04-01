@@ -26,10 +26,10 @@ enum syncState
 
 syncState currentSyncState; // indicator for 3 states{0: transmitter and receiver are in sync, 1: transmitter is ahead of time, 2: receiver is ahead of time}
 
-int countZero = 0;       // number of "0"s
-int countOne = 0;        // number of "1"s
+int countZero = 0; // number of "0"s
+int countOne = 0;  // number of "1"s
 
-bool firstReadingZero;   // indicates if that at the first reading(of the 3)the input value was0
+bool firstReadingZero; // indicates if that at the first reading(of the 3)the input value was0
 
 int decodedBitInt;       // decoded bit as integer ex: 1  (max of n0, n1)
 String decodedBitString; // decoded bit as string ex: "1" (max of n0, n1)
@@ -45,10 +45,10 @@ String finalMessage; // message
 
 void setup()
 {
-    Serial.begin(9600);        // set baud rate to 9600
-    j = 5;                     //
-    k = 7;                     //
-    firstReadingZero = false;  //
+    Serial.begin(9600);                   // set baud rate to 9600
+    j = 5;                                //
+    k = 7;                                //
+    firstReadingZero = false;             //
     currentSyncState = syncState::InSync; //
     for (int i = 0; i < 5; i++)
     {                                          //
@@ -89,15 +89,15 @@ void handleInput(int position)
     if (reading > ambient)
     {                  // if input value is greater than ambient by a 100
         countOne += 1; // a "1" was found so increase n1 by 1
-        if (position == 0) 
-        {                            // if the first reading
+        if (position == 0)
+        {                             // if the first reading
             firstReadingZero = false; // is 1 then f1 = 1
-        }                            //
+        }                             //
     }
     else
     {                   // else
         countZero += 1; // a "0" was found so increase n0 by 1
-        if (position == 0) 
+        if (position == 0)
         {                            // if the first reading
             firstReadingZero = true; // is 0 then f0 = 1
         }                            //
@@ -140,7 +140,7 @@ void syncReceiver()
 
 void decodeBit()
 {
-    
+
     if (countOne >= countZero)
     {                           // if more "1"s were found
         decodedBitInt = 1;      // then bit value is 1
@@ -157,7 +157,7 @@ void decodeBit()
         decodedBitString = "0";
 
         if (countOne == 1)
-        { // if a 1 was found once        
+        { // if a 1 was found once
             currentSyncState = firstReadingZero ? syncState::TransmitterFirst : syncState::ResceiverFirst;
             firstReadingZero = false;
         }
@@ -167,7 +167,6 @@ void decodeBit()
     countOne = 0;
     countZero = 0;
 }
-
 
 void detectMsgStart()
 {                                                                                                                                                                                            // if message has not been detected (state: 0)
@@ -179,64 +178,55 @@ void detectMsgStart()
     }
 }
 
-
 void decodeMsgLength()
 {
-    // if message has been detected (state: 1)
-    if (j >= 0)
-    { // for every bit of the 6 starting from the left-most(MSB: most significant bit)
-        if (decodedBitInt == 1)
-        {                         // if decoded bit has a value of "1"
-            bitSet(msgLength, j); // set the "j"bit (of msg_length
-        }                         // variable) value as "1"
-        if (j > 0)
-        {        // ex: j=4 (msg_length is initialized as 0 )
-            j--; // 000000 --> 001000 binary or 16 decimal(msg_length is integer so it is auto-converted)
-        }
-        else
-        {                                      // when the 6th bit is decoded before moving on with the next bit
-            currentState = state::ReadMessage; // change the state to 2(state: read message)
-        }                                      //
+    // for every bit of the 6 starting from the left-most(MSB: most significant bit)
+    if (decodedBitInt == 1)
+    {                         // if decoded bit has a value of "1"
+        bitSet(msgLength, j); // set the "j"bit (of msg_length
+    }                         // variable) value as "1"
+    if (j > 0)
+    {        // ex: j=4 (msg_length is initialized as 0 )
+        j--; // 000000 --> 001000 binary or 16 decimal(msg_length is integer so it is auto-converted)
+    }
+    else
+    {                                      // when the 6th bit is decoded before moving on with the next bit
+        currentState = state::ReadMessage; // change the state to 2(state: read message)
     }
 }
 
-
 void decodeMsg()
 {
+    // for every bit of the current character starting from the MSB
 
-    // for every character
-    if (k >= 0)
-    { // for every bit of the current character starting from the MSB
+    if (decodedBitInt == 1)
+    {                             // if decoded bit has a value of "1"
+        bitSet(currentMsgInt, k); // set the "j"bit (of x variable)value as "1"
+    }                             //
 
-        if (decodedBitInt == 1)
-        {                             // if decoded bit has a value of "1"
-            bitSet(currentMsgInt, k); // set the "j"bit (of x variable)value as "1"
-        }                             //
+    if (k > 0)
+    {        //
+        k--; //
+    }
+    else
+    {                                                 // when the 8th bit is decoded before moving on with the next bit
+        currentMsgChar = currentMsgInt;               // convert integer "x" to character "temp_char" according to ASCII ex:x = 97-->temp_char= a
+        finalMessage = finalMessage + currentMsgChar; // add character "temp_char" at the end of the string "final_message"ex: final_messag =kj, temp_char = a-->final_message=kja
+        j = 5;                                        // reset counter j
+        k = 7;                                        // reset counter k
+        currentMsgInt = 0;                            // reset x
 
-        if (k > 0)
-        {        //
-            k--; //
+        if (msgLength > 1)
+        {                //
+            msgLength--; //
         }
         else
-        {                                                 // when the 8th bit is decoded before moving on with the next bit
-            currentMsgChar = currentMsgInt;               // convert integer "x" to character "temp_char" according to ASCII ex:x = 97-->temp_char= a
-            finalMessage = finalMessage + currentMsgChar; // add character "temp_char" at the end of the string "final_message"ex: final_messag =kj, temp_char = a-->final_message=kja
-            j = 5;                                        // reset counter j
-            k = 7;                                        // reset counter k
-            currentMsgInt = 0;                            // reset x
-
-            if (msgLength > 1)
-            {                //
-                msgLength--; //
-            }
-            else
-            {                                 // when the last character is added to the string "final_message"
-                Serial.println(finalMessage); // print message
-                currentState = state::Detect; // reset state to 0
-                msgLength = 0;                // reset message length(msg_length)to 0
-                finalMessage = String('\0');  // reset string
-                resetQ();                     //"final_message" to null and reset queue
-            }
+        {                                 // when the last character is added to the string "final_message"
+            Serial.println(finalMessage); // print message
+            currentState = state::Detect; // reset state to 0
+            msgLength = 0;                // reset message length(msg_length)to 0
+            finalMessage = String('\0');  // reset string
+            resetQ();                     //"final_message" to null and reset queue
         }
     }
 }
