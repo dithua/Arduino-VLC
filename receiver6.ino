@@ -147,7 +147,7 @@ void decodeBit()
         decodedBitString = "1"; //
         if (countZero == 1)
         { // if a 0 was found once
-            currentSyncState = firstReadingZero ? syncState::ResceiverFirst : syncState::TransmitterFirst;
+            currentSyncState = !firstReadingZero ? syncState::TransmitterFirst : syncState::ResceiverFirst;
             firstReadingZero = false;
         }
     }
