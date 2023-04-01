@@ -176,7 +176,7 @@ void detectMsgStart()
 void decodeMsgLength()
 {
     // for every bit of the 6 starting from the left-most(MSB: most significant bit)
-    if (decodedBit == "1")
+    if (decodedBit.compareTo("1") == 0)
     {                                         // if decoded bit has a value of "1"
         bitSet(msgLength, lengthBitPosition); // set the "j"bit (of msg_length
     }                                         // variable) value as "1"
@@ -194,7 +194,7 @@ void decodeMsg()
 {
     // for every bit of the current character starting from the MSB
 
-    if (decodedBit == "1")
+    if (decodedBit.compareTo("1") == 0)
     {                                              // if decoded bit has a value of "1"
         bitSet(currentCharAsInt, charBitPosition); // set the "j"bit (of x variable)value as "1"
     }
