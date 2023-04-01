@@ -28,8 +28,8 @@ syncState currentSyncState; // indicator for 3 states{0: transmitter and receive
 
 int countZero = 0;       // number of "0"s
 int countOne = 0;        // number of "1"s
-int firstInputReading_0; // indicates if that at the first reading(of the 3)the input value was0
-int firstInputReading_1; // indicates if that at the first reading(of the 3)the input value was1
+
+bool firstReadingZero;   // indicates if that at the first reading(of the 3)the input value was0
 
 int decodedBitInt;       // decoded bit as integer ex: 1  (max of n0, n1)
 String decodedBitString; // decoded bit as string ex: "1" (max of n0, n1)
@@ -48,9 +48,8 @@ void setup()
     Serial.begin(9600);        // set baud rate to 9600
     j = 5;                     //
     k = 7;                     //
-    firstInputReading_0 = 0;   // initialise values
-    firstInputReading_1 = 0;   //
-    currentSyncState = inSync; //
+    firstReadingZero = false;  //
+    currentSyncState = syncState::InSync; //
     for (int i = 0; i < 5; i++)
     {                                          //
         ambient += analogRead(lightPin) + 100; // read the ambient input/noise
@@ -91,7 +90,7 @@ void handleInput(int firstReading)
         countOne += 1; // a "1" was found so increase n1 by 1
         if (firstReading == 0)
         {                            // if the first reading
-            firstInputReading_1 = 1; // is 1 then f1 = 1
+            firstReadingZero = false; // is 1 then f1 = 1
         }                            //
     }
     else
@@ -99,7 +98,7 @@ void handleInput(int firstReading)
         countZero += 1; // a "0" was found so increase n0 by 1
         if (firstReading == 0)
         {                            // if the first reading
-            firstInputReading_0 = 1; // is 0 then f0 = 1
+            firstReadingZero = true; // is 0 then f0 = 1
         }                            //
     }
     delay(dl);
@@ -140,23 +139,16 @@ void syncReceiver()
 
 void decodeBit()
 {
-    //---------- D E C O D E - B I T ----------
+    
     if (countOne >= countZero)
     {                           // if more "1"s were found
         decodedBitInt = 1;      // then bit value is 1
         decodedBitString = "1"; //
         if (countZero == 1)
         { // if a 0 was found once
-            if (firstInputReading_1 == 1)
-            {                                                   // if 1 was found at the first reading(0 was found at the last reading)
-                currentSyncState = syncState::TransmitterFirst; // transmitter is ahead of time
-            }
-            else
-            {                                                 // if 1 was not found at the first reading(0 was found at the first reading)
-                currentSyncState = syncState::ResceiverFirst; // receiver is ahead of time
-            }                                                 //
-            firstInputReading_1 = 0;                          // reset f1
-        }                                                     //
+            currentSyncState = firstReadingZero ? syncState::ResceiverFirst : syncState::TransmitterFirst;
+            firstReadingZero = false;
+        }
     }
     else
     {                      // else(more "0"s were found)
@@ -164,17 +156,10 @@ void decodeBit()
         decodedBitString = "0";
 
         if (countOne == 1)
-        { // if a 1 was found once
-            if (firstInputReading_0 == 1)
-            {                                                   // if 0 was found at the first reading(1 was found at the last reading)
-                currentSyncState = syncState::TransmitterFirst; // transmitter is ahead of time
-            }
-            else
-            {                                                 // if 0 was not found at the first reading(1 was found at the first reading)
-                currentSyncState = syncState::ResceiverFirst; // receiver is ahead of time
-            }                                                 //
-            firstInputReading_0 = 0;                          // reset f0
-        }                                                     //
+        { // if a 1 was found once        
+            currentSyncState = firstReadingZero ? syncState::TransmitterFirst : syncState::ResceiverFirst;
+            firstReadingZero = false;
+        }
     }
 
     // reset counters
@@ -182,7 +167,7 @@ void decodeBit()
     countZero = 0;
 }
 
-//---------- S Y N C H R O N I Z A T I O N ----------
+
 void detectMsgStart()
 {                                                                                                                                                                                            // if message has not been detected (state: 0)
     enqueue(decodedBitString);                                                                                                                                                               // add the decoded bit to the queue
@@ -193,7 +178,7 @@ void detectMsgStart()
     }
 }
 
-//---------- D E C O D E - M E S S A G E - L E N G T H ----------
+
 void decodeMsgLength()
 {
     // if message has been detected (state: 1)
@@ -213,9 +198,10 @@ void decodeMsgLength()
         }                                      //
     }
 }
+
+
 void decodeMsg()
 {
-    //---------- D E C O D E - M E S S A G E ----------
 
     // for every character
     if (k >= 0)
