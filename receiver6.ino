@@ -37,17 +37,17 @@ String decodedBitString; // decoded bit as string ex: "1" (max of n0, n1)
 String temp_string; // current queue elements in one string
 int msgLength = 0;  // message length
 
-int currentMsgInt;   // current 8 bits of message to integer
-char currentMsgChar; // character produced by integer x
+int currentCharAsInt;   // current 8 bits of message to integer
+char currentChar; // character produced by integer x
 
-int j, k;            // counters
+int lengthBitPosition, charBitPosition;            // counters
 String finalMessage; // message
 
 void setup()
 {
     Serial.begin(9600);                   // set baud rate to 9600
-    j = 5;                                //
-    k = 7;                                //
+    lengthBitPosition = 5;                                //
+    charBitPosition = 7;                                //
     firstReadingZero = false;             //
     currentSyncState = syncState::InSync; //
     for (int i = 0; i < 5; i++)
@@ -183,11 +183,11 @@ void decodeMsgLength()
     // for every bit of the 6 starting from the left-most(MSB: most significant bit)
     if (decodedBitInt == 1)
     {                         // if decoded bit has a value of "1"
-        bitSet(msgLength, j); // set the "j"bit (of msg_length
+        bitSet(msgLength, lengthBitPosition); // set the "j"bit (of msg_length
     }                         // variable) value as "1"
-    if (j > 0)
+    if (lengthBitPosition > 0)
     {        // ex: j=4 (msg_length is initialized as 0 )
-        j--; // 000000 --> 001000 binary or 16 decimal(msg_length is integer so it is auto-converted)
+        lengthBitPosition--; // 000000 --> 001000 binary or 16 decimal(msg_length is integer so it is auto-converted)
     }
     else
     {                                      // when the 6th bit is decoded before moving on with the next bit
@@ -201,20 +201,19 @@ void decodeMsg()
 
     if (decodedBitInt == 1)
     {                             // if decoded bit has a value of "1"
-        bitSet(currentMsgInt, k); // set the "j"bit (of x variable)value as "1"
+        bitSet(currentCharAsInt, charBitPosition); // set the "j"bit (of x variable)value as "1"
     }                             //
 
-    if (k > 0)
+    if (charBitPosition > 0)
     {        //
-        k--; //
+        charBitPosition--; //
     }
     else
     {                                                 // when the 8th bit is decoded before moving on with the next bit
-        currentMsgChar = currentMsgInt;               // convert integer "x" to character "temp_char" according to ASCII ex:x = 97-->temp_char= a
-        finalMessage = finalMessage + currentMsgChar; // add character "temp_char" at the end of the string "final_message"ex: final_messag =kj, temp_char = a-->final_message=kja
-        j = 5;                                        // reset counter j
-        k = 7;                                        // reset counter k
-        currentMsgInt = 0;                            // reset x
+        currentChar = currentCharAsInt;               // convert integer "x" to character "temp_char" according to ASCII ex:x = 97-->temp_char= a
+        finalMessage = finalMessage + currentChar; // add character "temp_char" at the end of the string "final_message"ex: final_messag =kj, temp_char = a-->final_message=kja
+        charBitPosition = 7;                                        // reset counter k
+        currentCharAsInt = 0;                            // reset x
 
         if (msgLength > 1)
         {                //
@@ -224,6 +223,7 @@ void decodeMsg()
         {                                 // when the last character is added to the string "final_message"
             Serial.println(finalMessage); // print message
             currentState = state::Detect; // reset state to 0
+            lengthBitPosition = 5;                        // reset counter j
             msgLength = 0;                // reset message length(msg_length)to 0
             finalMessage = String('\0');  // reset string
             resetQ();                     //"final_message" to null and reset queue
