@@ -20,3 +20,6 @@ receiver in the infrared spectrum --> receiver4.ino
 transmitter with sync --> transmitter_comm.ino (final version)
 
 receiver with sync --> receiver6.ino (final version)
+
+For more info about my project you can refer to the link below
+https://estia.hua.gr/browse/20893
